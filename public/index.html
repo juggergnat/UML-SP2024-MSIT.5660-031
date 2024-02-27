@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Asset Manager</title>
+    <style>
+      label { min-width: 100px; display: inline-block; }
+    </style>
+  </head>
+
+  <body>
+    <h1>Asset Manager Demo</h1>
+    <p>This is a thing.</p>
+    <form onsubmit="mydo()">
+      <p>
+      <label for="fileupload">fileupload</label>
+      <input type="file" name="fileupload" id="fileupload">
+      </p>
+      <p>
+      <label for="sku">sku</label>
+      <input type="text" name="sku" id="sku">
+      </p>
+      <p><input type="submit" value="submit"></p>
+    </form>
+    <script>
+      function mydo() {
+        alert("The form was submitted");
+      }
+    </script>
+  </body>
+</html>
