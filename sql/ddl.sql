@@ -1,5 +1,7 @@
 CREATE DATABASE IF NOT EXISTS webdb;
 
+use webdb;
+
 drop table if exists asset_item;
 drop table if exists asset_type;
 
