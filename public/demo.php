@@ -43,11 +43,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       $pdo = new PDO('mysql:host=' . $database_host . '; dbname=' . $database_name, $database_user, $database_pass);
       $stmt= $pdo->prepare($sql);
       $stmt->execute([
-              $_POST['sku'],
-              $_POST['assettype'],
-              $_POST['person'],
-              $_POST['note'],
-              (isset($URL) ? $URL : '')
+        $_POST['sku'],
+        $_POST['assettype'],
+        $_POST['person'],
+        $_POST['note'],
+        (isset($URL) ? $URL : '')
       ]);
     } catch (PDOException $e) {
         $insert["error"] = true;
@@ -87,9 +87,11 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       label { min-width: 150px; display: inline-block; }
       input, select { padding: 8px 4px; }
       optgroup { font-size: 1.5em; }
+      small { display: block; clear: all; margin-left: 150px; font-size: 0.6em; padding: 8px 4px; }
       .submitted { border: 4px solid green; padding:1em; }
       .insert { border: 4px solid red; padding:1em; }
     </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
   </head>
 
   <body>
@@ -128,6 +130,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       <p>
       <label for="note">Note</label>
       <input type="text" name="note" id="note" placeholder="Enter asset condition; e.g. good, bad" maxlength="32" size="32" required>
+      <small>e.g. "this laptop slaps" or "looks beaten up"</small>
       </p>
       <p><input type="submit" value="submit"></p>
     </form>
@@ -137,17 +140,65 @@ if ($database_host && $database_name && $database_user && $database_pass) {
         <hr />
         <h2>Current Assets</h2>
         <pre><?php
-          if ($output['data'])     print_r($output['data']);
-          elseif ($output['msg'])  print_r($output['msg']);
+          if (isset($output['data']))     print_r($output['data']);
+          elseif (isset($output['msg']))  print_r($output['msg']);
         ?></pre>
       <?php } ?>
     </div>
     </div>
     <script type="text/javascript">
       function validateMyForm() {
-        //alert("The form was not submitted");
-        //return false;
-         document.getElementById("newasset").submit();
+
+        // alert("The form was not yet submitted");
+        // document.getElementById("newasset").submit();
+
+        $(function() {
+
+          $submitThis=true;
+
+          var params = {
+            // Request parameters
+          };
+
+          $body = { "text": document.getElementById("note").value,
+            "categories": [ "Violence", "Hate" ],
+            "blocklistNames": [ "bl-pak" ],
+            "haltOnBlocklistHit": false,
+            "outputType": "FourSeverityLevels" };
+
+          $.ajax({
+            url: "https://<?php echo $CS_END; ?>.cognitiveservices.azure.com/contentsafety/text:analyze?api-version=2023-10-01"  + $.param(params),
+            beforeSend: function(xhrObj){
+              // Request headers
+              xhrObj.setRequestHeader("Content-Type","application/json");
+              xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","<?php echo $CS_KEY ?>");
+            },
+            type: "POST",
+            // Request body
+            data: JSON.stringify($body),
+          })
+          .done(function(data) {
+            if ( data.blocklistsMatch.length ) {
+              $submitThis=false;
+              alert("You cannot use the word/phrase: " + data.blocklistsMatch[0].blocklistItemText);
+            }
+            if ( data.categoriesAnalysis.length ) {
+              for ( i=0; i<data.categoriesAnalysis.length; i++ ){
+                if ( data.categoriesAnalysis[i].severity ) {
+                  $submitThis=false;
+                  alert("This submission's note field rates too high in the category: " + data.categoriesAnalysis[i].category);
+                }
+              }
+            }
+            if ( $submitThis ) {
+              alert("Looks okay far. Submitting.");
+              document.getElementById("newasset").submit();
+            }
+          })
+          .fail(function() {
+            alert("Error: Please contact the author. This used to work. I probably have to restart a service.");
+          });
+        });
       }
     </script>
   </body>
