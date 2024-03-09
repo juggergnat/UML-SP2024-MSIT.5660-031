@@ -16,12 +16,70 @@ $resp_st  = '';
 // Handle form submission.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+  $PROCEED = FALSE;
+
+  $tempoimage=uploadImage($PUBLIC_IP);
+
+  // Run OCR on image.
+  //
+  if ( ! $tempoimage['url'] ) {
+    $failure = "Could not run OCR. Call the author.";
+  }
+  else {
+    $scanResult = scanImage($CV_END, $CV_KEY, $tempoimage['url']); 
+    if ( ! $scanResult ) {
+      $failure = "Could not complete OCR. Call the author.";
+    }
+    else {
+      if ( isset($scanResult['err']) && ! $scanResult['err'] && isset($scanResult['data'])) {
+
+        // Decode and re-encode JSON data with pretty-printing.
+        // $decodedData = json_decode($scanResult['data'], true);
+        // $prettyPrintedJson = json_encode($decodedData, JSON_PRETTY_PRINT);
+        // $ocr_result = '<pre>' . print_r($prettyPrintedJson, true) . '</pre>';
+
+        $ocrlines = [];
+        $ocrdata  = json_decode($scanResult['data'], true);
+        if (isset($ocrdata['readResult']) && is_array($ocrdata['readResult'])) {
+          foreach ($ocrdata['readResult'] as $readResult) {
+            // if (isset($readResult['blocks']) && is_array($readResult['blocks'])) {
+            if (is_array($readResult)) { 
+              foreach ($readResult as $block) {
+                if (isset($block['lines']) && is_array($block['lines'])) {
+                  foreach ($block['lines'] as $line) {
+                    $ocrlines[] = $line['text'];
+                  }        
+                }
+              }
+            }
+          }
+        }
+
+        $ocrmatch = FALSE;
+        foreach ($ocrlines as $l) {
+          if ($_POST['sku'] == preg_replace("/[^0-9]/", "", $l) ) {
+            $ocrmatch = 'The sku you entered matches what we found in the image. Neat!';
+            $PROCEED = TRUE;
+          }
+        }
+        if ( ! $ocrmatch ) {
+          $failure = "The OCR did not match the SKU entered. Try again?";
+        }
+
+      }
+      else {
+        $failure = "Could not intepret OCR. Call the author.";
+      }
+    }
+  }
+
   // Upload image to Azure Storage.
   //
-  if ( !empty($_FILES['uploaded_file']) ) {
+  if ( $PROCEED && !empty($_FILES['uploaded_file']) && isset($tempoimage['file'])) {
     $filename           = $_FILES['uploaded_file']['name'];
     $filetype           = $_FILES['uploaded_file']['type'];
-    $filepath           = $_FILES['uploaded_file']['tmp_name'];
+    //$filepath           = $_FILES['uploaded_file']['tmp_name'];
+    $filepath           = getcwd() . '/uploads/' . $tempoimage['file'];
     $storageAccountname = $STORAGE_NAME;
     $containerName      = $STORAGE_CONTAINER;
     $accesskey          = $STORAGE_KEY;
@@ -30,23 +88,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
     if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
-      // $resp_st = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
+      $resp_st = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
     }
+  }
+  else {
+    $failure = "Image issue. Call the author.";
   }
 
   // Write to Database.
   //
-  if ($database_host && $database_name && $database_user && $database_pass) {
+  if ( $PROCEED && $database_host && $database_name && $database_user && $database_pass ) {
     $sql = "INSERT INTO asset_item (sku, akey, person, note, image) VALUES (?,?,?,?,?)";
     // Connect and process (or not).
     try {
       $pdo = new PDO('mysql:host=' . $database_host . '; dbname=' . $database_name, $database_user, $database_pass);
       $stmt= $pdo->prepare($sql);
       $stmt->execute([
-        $_POST['sku'],
-        $_POST['assettype'],
-        $_POST['person'],
-        $_POST['note'],
+        $_POST['sku'], 
+        $_POST['assettype'], 
+        $_POST['person'], 
+        $_POST['note'], 
         (isset($URL) ? $URL : '')
       ]);
     } catch (PDOException $e) {
@@ -56,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 }
 
-$submitted = ($_POST) ? 'Submitted' : '';
+$submitted = ($_POST && $PROCEED) ? 'Submitted' : '';
 
 // Prepare to display data from database.
 //
@@ -88,8 +149,9 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       input, select { padding: 8px 4px; }
       optgroup { font-size: 1.5em; }
       small { display: block; clear: all; margin-left: 150px; font-size: 0.6em; padding: 8px 4px; }
-      .submitted { border: 4px solid green; padding:1em; }
-      .insert { border: 4px solid red; padding:1em; }
+      .submitted, .ocrmatch { border: 4px solid green; padding:1em; }
+      .ocrlines { border: 4px solid black; padding:1em; }
+      .insert, .failure { border: 4px solid red; padding:1em; }
     </style>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
   </head>
@@ -100,6 +162,10 @@ if ($database_host && $database_name && $database_user && $database_pass) {
     <p>This is a thing.</p>
     <?php if ($submitted) { ?><p class="submitted">Submitted, see below for new entry.</p><?php } ?>
     <?php if (isset($insert)) { ?><p class="insert"><?php echo $insert['msg']; ?></p><?php } ?>
+    <?php if (isset($failure)) { ?><p class="failure"><?php echo $failure; ?></p><?php } ?>
+    <?php if (isset($ocrmatch) && $ocrmatch) { ?><p class="ocrmatch"><?php echo $ocrmatch; ?></p><?php } ?>
+    <?php if (isset($ocrlines) && $ocrlines) { ?><p class="ocrlines">Lines: <?php echo implode(', ', $ocrlines); ?></p><?php } ?>
+
     <p><strong>All fields are required.</p>
     <form id="newasset" action="" method="POST" onsubmit="event.preventDefault(); validateMyForm();" enctype="multipart/form-data">
       <p>
@@ -117,7 +183,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       </p>
       <p>
       <label for="sku">SKU</label>
-      <input type="text" name="sku" id="sku" placeholder="Enter the 6 digit code" maxlength="6" required>
+      <input type="text" name="sku" id="sku" placeholder="Enter the 5 or 6 digit code" maxlength="6" required>
       </p>
       <p>
       <label for="uploaded_file">SKU image</label>
@@ -140,9 +206,19 @@ if ($database_host && $database_name && $database_user && $database_pass) {
         <hr />
         <h2>Current Assets</h2>
         <pre><?php
-          if (isset($output['data']))     print_r($output['data']);
-          elseif (isset($output['msg']))  print_r($output['msg']);
+          if (isset($output['msg']))  print_r($output['msg']);
+          // if (isset($output['data']))  print_r($output['data']);
         ?></pre>
+        <?php if (isset($output['data']) && is_array($output['data'])) { ?>
+          <?php foreach ($output['data'] as $it) { ?>
+            <p><img src="<?php echo $it['image']; ?>" width="300" /><br>
+            id: <?php echo $it['aid']; ?>   <br/> 
+            sku: <?php echo $it['sku']; ?>    <br/>
+            type: <?php echo $it['akey']; ?>    <br/>
+            person: <?php echo $it['person']; ?>   <br/>
+            note: <?php echo $it['note']; ?>    </p>
+          <?php } ?>
+        <?php } ?>
       <?php } ?>
     </div>
     </div>
@@ -191,7 +267,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
               }
             }
             if ( $submitThis ) {
-              alert("Looks okay far. Submitting.");
+              alert("Looks okay so far. Submitting.");
               document.getElementById("newasset").submit();
             }
           })
