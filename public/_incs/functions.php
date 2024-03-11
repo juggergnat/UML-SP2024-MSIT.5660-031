@@ -30,6 +30,7 @@ function moderateNote($note_text) {
 //       "https://<endpoint>.cognitiveservices.azure.com/computervision/imageanalysis:analyze?features=caption,read&model-version=latest&language=en&api-version=2024-02-01" \
 //    -d "{'url':'<imageurl>'}"
 // Help from: https://stackoverflow.com/questions/66794132/cognitive-services-ai-vision-tag-over-php
+//
 function scanImage($endpoint, $subscriptionKey, $imageurl) {
 
   $result = FALSE;
@@ -102,20 +103,20 @@ function scanImage($endpoint, $subscriptionKey, $imageurl) {
 function uploadImage($ip) {
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ( !empty($_FILES['uploaded_file']) ) {
-      $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
-      $type = $_FILES['uploaded_file']['type'];
-      $path = 'uploads/';
-      $name = 'raw-' . time();
-      $path = $path . $name . "." . $file_parts['extension'] ;
-      if (!$_FILES['uploaded_file']['error']) {
-        if ( move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $path) ) {
-           // echo "The file ". basename($path) ." has been uploaded";
-           return [
-             'url' => 'http://' . $ip . '/' . $path,
-             'file' => basename($path),
-           ];
-        }
-      }
+      // $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
+      // $type = $_FILES['uploaded_file']['type'];
+      // $path = 'uploads/';
+      // $name = 'raw-' . time();
+      // $path = $path . $name . "." . $file_parts['extension'] ;
+      // if (!$_FILES['uploaded_file']['error']) {
+      //   if ( move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $path) ) {
+      //      // echo "The file ". basename($path) ." has been uploaded";
+      //      return [
+      //        'url' => 'http://' . $ip . '/' . $path,
+      //        'file' => basename($path),
+      //      ];
+      //   }
+      // }
     }
   }
   return false;
@@ -177,7 +178,11 @@ function uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $
 
   curl_close($ch);
 
-  return 'Uploaded successfully: ' . print_r($result, true);
+  return [
+    'url' => $URL,
+    'file' => $blobName,
+    'result' => $result,
+  ];
 }
 
 ?>

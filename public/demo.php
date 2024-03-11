@@ -11,22 +11,35 @@ error_reporting(E_ALL);
 require('../config.php');
 require('_incs/functions.php');
 
-$resp_st  = '';
-
 // Handle form submission.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   $PROCEED = FALSE;
 
-  $tempoimage=uploadImage($PUBLIC_IP);
+  // First, prepare the image for OCR scan.
+  //
+  if ( !empty($_FILES['uploaded_file']) ) {
+    $filename           = $_FILES['uploaded_file']['name'];
+    $filetype           = $_FILES['uploaded_file']['type'];
+    $filepath           = $_FILES['uploaded_file']['tmp_name'];
+    $storageAccountname = $STORAGE_NAME;
+    $containerName      = $STORAGE_CONTAINER . '-raw';
+    $accesskey          = $STORAGE_KEY;
+    $blobName           = date('YmdGis') . '__' . $filename;
+    $URL = "https://$storageAccountname.blob.core.windows.net/$containerName/$blobName";
+    $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
+    if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
+      $rawblob = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
+    }
+  }
 
   // Run OCR on image.
   //
-  if ( ! $tempoimage['url'] ) {
+  if ( ! $rawblob['url'] ) {
     $failure = "Could not run OCR. Call the author.";
   }
   else {
-    $scanResult = scanImage($CV_END, $CV_KEY, $tempoimage['url']); 
+    $scanResult = scanImage($CV_END, $CV_KEY, $rawblob['url']);
     if ( ! $scanResult ) {
       $failure = "Could not complete OCR. Call the author.";
     }
@@ -75,29 +88,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   // Upload image to Azure Storage.
   //
-  if ( $PROCEED && !empty($_FILES['uploaded_file']) && isset($tempoimage['file'])) {
+  if ( $PROCEED && !empty($_FILES['uploaded_file']) && isset($rawblob['file'])) {
     $filename           = $_FILES['uploaded_file']['name'];
     $filetype           = $_FILES['uploaded_file']['type'];
-    //$filepath           = $_FILES['uploaded_file']['tmp_name'];
-    $filepath           = getcwd() . '/uploads/' . $tempoimage['file'];
+    $filepath           = $_FILES['uploaded_file']['tmp_name'];
     $storageAccountname = $STORAGE_NAME;
     $containerName      = $STORAGE_CONTAINER;
     $accesskey          = $STORAGE_KEY;
-    $blobName           = $filename;
+    $blobName           = preg_replace("/[^0-9]/", "", $_POST['sku']) . '__' . $rawblob['file'];
     $URL = "https://$storageAccountname.blob.core.windows.net/$containerName/$blobName";
 
     $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
     if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
-      $resp_st = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
+      $cookedblob = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
+    }
+    else {
+      $PROCEED = FALSE;
+      $failure = "Image issue. Needs to be jpg or png.";
     }
   }
   else {
+    $PROCEED = FALSE;
     $failure = "Image issue. Call the author.";
   }
 
   // Write to Database.
   //
-  if ( $PROCEED && $database_host && $database_name && $database_user && $database_pass ) {
+  if ( $PROCEED && $database_host && $database_name && $database_user && $database_pass && isset($cookedblob['url']) ) {
     $sql = "INSERT INTO asset_item (sku, akey, person, note, image) VALUES (?,?,?,?,?)";
     // Connect and process (or not).
     try {
@@ -108,12 +125,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_POST['assettype'], 
         $_POST['person'], 
         $_POST['note'], 
-        (isset($URL) ? $URL : '')
+        $cookedblob['url'],
       ]);
     } catch (PDOException $e) {
+        $PROCEED = FALSE;
         $insert["error"] = true;
         $insert["msg"]   = $e->getMessage();
     }
+  }
+  else {
+    $PROCEED = FALSE;
+    $insert["error"] = true;
+    $insert["msg"]   = "Couldn't write to the database, but I think the images got stored.";
   }
 }
 
@@ -143,7 +166,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
     <meta charset="UTF-8">
     <title>Asset Tracker</title>
     <style>
-      body { background-color: #333; color: #eee; font-family: Arial, Helvetica, sans-serif; font-size: 1.5em; }
+      body { background-color: #333; color: #eee; font-family: Arial, Helvetica, sans-serif; font-size: 1.4em; }
       div.outer { max-width: 500px; margin: 0 auto; }
       label { min-width: 150px; display: inline-block; }
       input, select { padding: 8px 4px; }
@@ -160,11 +183,11 @@ if ($database_host && $database_name && $database_user && $database_pass) {
     <div class="outer">
     <h1>Asset Tracker Demo</h1>
     <p>This is a thing.</p>
-    <?php if ($submitted) { ?><p class="submitted">Submitted, see below for new entry.</p><?php } ?>
-    <?php if (isset($insert)) { ?><p class="insert"><?php echo $insert['msg']; ?></p><?php } ?>
-    <?php if (isset($failure)) { ?><p class="failure"><?php echo $failure; ?></p><?php } ?>
-    <?php if (isset($ocrmatch) && $ocrmatch) { ?><p class="ocrmatch"><?php echo $ocrmatch; ?></p><?php } ?>
     <?php if (isset($ocrlines) && $ocrlines) { ?><p class="ocrlines">Lines: <?php echo implode(', ', $ocrlines); ?></p><?php } ?>
+    <?php if (isset($ocrmatch) && $ocrmatch) { ?><p class="ocrmatch"><?php echo $ocrmatch; ?></p><?php } ?>
+    <?php if (isset($failure)) { ?><p class="failure"><?php echo $failure; ?></p><?php } ?>
+    <?php if (isset($insert)) { ?><p class="insert"><?php echo $insert['msg']; ?></p><?php } ?>
+    <?php if ($submitted) { ?><p class="submitted">Submitted, see below for new entry.</p><?php } ?>
 
     <p><strong>All fields are required.</p>
     <form id="newasset" action="" method="POST" onsubmit="event.preventDefault(); validateMyForm();" enctype="multipart/form-data">
@@ -200,7 +223,6 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       </p>
       <p><input type="submit" value="submit"></p>
     </form>
-    <p><?php echo $resp_st ?></p>
     <div>
       <?php if ($output) { ?>
         <hr />
