@@ -176,7 +176,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       .ocrlines { border: 4px solid black; padding:1em; }
       .insert, .failure { border: 4px solid red; padding:1em; }
     </style>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
   </head>
 
   <body>
