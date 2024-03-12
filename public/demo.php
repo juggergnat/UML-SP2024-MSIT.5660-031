@@ -238,7 +238,8 @@ if ($database_host && $database_name && $database_user && $database_pass) {
             sku: <?php echo $it['sku']; ?>    <br/>
             type: <?php echo $it['akey']; ?>    <br/>
             person: <?php echo $it['person']; ?>   <br/>
-            note: <?php echo $it['note']; ?>    </p>
+            note: <?php echo $it['note']; ?>    <br />
+            image url: <?php echo $it['image']; ?>    </p>
           <?php } ?>
         <?php } ?>
       <?php } ?>
