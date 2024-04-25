@@ -1,20 +1,20 @@
 <?php
 
-$PUBLIC_IP = "<your public ip>";
+$PUBLIC_IP = 'VAL_PUBLIC_IP';
 
-$STORAGE_NAME      = '<your storage name>';
-$STORAGE_KEY       = "<your storage key>';
-$STORAGE_CONTAINER = '<your storage container>';
+$STORAGE_NAME      = 'VAL_STORAGE_NAME';
+$STORAGE_KEY       = 'VAL_STORAGE_KEY';
+$STORAGE_CONTAINER = 'VAL_STORAGE_CONTAINER';
 
-$database_host = '<your db name>.mysql.database.azure.com';
-$database_user = '<your db user>';
-$database_pass = '<your db password>';
-$database_name = '<your db name>';
+$database_host = 'val_database_host';
+$database_user = 'val_database_user';
+$database_pass = 'val_database_pass';
+$database_name = 'val_database_name';
 
-$CS_END = "<your content safety endpoint name>";
-$CS_KEY = "<your content safety endpoint key>";
+$CS_END = "VAL_CS_END";
+$CS_KEY = "VAL_CS_KEY";
 
-$CV_END = "<your azure vision endpoint name>";
-$CV_KEY = "<your azure vision endpoint key>";
+$CV_END = "VAL_CV_END";
+$CV_KEY = "VAL_CV_KEY";
 
 ?>
