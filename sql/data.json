@@ -1,0 +1,39 @@
+{
+  "instance": "pak2d-db-mysql",
+  "project": "sp2024-ka-p2",
+  "database": "webdb",
+  "query": [
+    {
+      "query": "drop table if exists asset_item"
+    },
+    {
+      "query": "drop table if exists asset_type"
+    },
+    {
+      "query": "create table asset_type
+ (
+  akey  varchar(4) NOT NULL,
+  atype  varchar(16) NOT NULL,
+  primary key (akey)
+ )"
+    },
+    {
+      "query": "create table asset_item
+ (aid int(11) AUTO_INCREMENT,
+  sku  varchar(8) NOT NULL,
+  akey varchar(4) NOT NULL,
+  person varchar(40) DEFAULT NULL,
+  note  varchar(32) DEFAULT NULL,
+  image varchar(256) DEFAULT NULL,
+  primary key (aid),
+  foreign key (akey) references asset_type (akey)
+ )"
+    },
+    {
+      "query": "INSERT INTO asset_type VALUES ('LAP', 'Laptop'), ('PER', 'Peripheral'), ('MON', 'Monitor'), ('OTH', 'Other')"
+    },
+    {
+      "query": "INSERT INTO asset_item (sku, akey, note) VALUES ('000123', 'LAP', 'Good shape'), ('222123', 'MON', 'Scratched up')"
+    }
+  ]
+}
