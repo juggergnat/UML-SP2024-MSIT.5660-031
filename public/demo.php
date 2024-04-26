@@ -11,7 +11,7 @@ error_reporting(E_ALL);
 require('../../config.php');
 require('_incs/functions.php');
 
-$DEVINTERRUPT = TRUE;
+$DEVINTERRUPT = FALSE;
 
 // Handle form submission.
 if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
@@ -21,22 +21,30 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
   // First, prepare the image for OCR scan.
   //
   if ( !empty($_FILES['uploaded_file']) ) {
+
+    // These come from the uploaded file.
     $filename           = $_FILES['uploaded_file']['name'];
-    $filetype           = $_FILES['uploaded_file']['type'];
-    $filepath           = $_FILES['uploaded_file']['tmp_name'];
-    $storageAccountname = $STORAGE_NAME;
-    $containerName      = $STORAGE_CONTAINER . '-raw';
-    $accesskey          = $STORAGE_KEY;
+    $filetype           = $_FILES['uploaded_file']['type'];     // e.g. 'image/jpeg'; aka $content_type
+    $filepath           = $_FILES['uploaded_file']['tmp_name']; // e.g. '/path/to/your/file.jpg';
     $blobName           = date('YmdGis') . '__' . $filename;
-    $URL = "https://$storageAccountname.blob.core.windows.net/$containerName/$blobName";
+
+    // These are specific to the cloud storage provider.
+    $URL                = $GCS_URL;
+    $CRED_PATH          = $GC_CRED_PATH;
+    $PROJ_ID            = $GC_PROJECT_ID;
+
     $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
     if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
-      $rawblob = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
+      $rawblob = uploadBlob($filepath, $blobName, $URL, $filetype, $CRED_PATH, $PROJ_ID);
+    }
+    else {
+      $failure = "Sorry, only jpg and png.";
     }
   }
 
   // Run OCR on image.
   //
+  if ($PROCEED) {
   if ( ! $rawblob['url'] ) {
     $failure = "Could not run OCR. Call the author.";
   }
@@ -87,9 +95,11 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
       }
     }
   }
+  }
 
   // Upload image to Azure Storage.
   //
+  /*
   if ( $PROCEED && !empty($_FILES['uploaded_file']) && isset($rawblob['file'])) {
     $filename           = $_FILES['uploaded_file']['name'];
     $filetype           = $_FILES['uploaded_file']['type'];
@@ -113,6 +123,7 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
     $PROCEED = FALSE;
     $failure = "Image issue. Call the author.";
   }
+  */
 
   // Write to Database.
   //
