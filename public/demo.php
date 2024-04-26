@@ -14,7 +14,7 @@ require('_incs/functions.php');
 $DEVINTERRUPT = TRUE;
 
 // Handle form submission.
-if (!DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
+if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
 
   $PROCEED = FALSE;
 
