@@ -11,10 +11,8 @@ error_reporting(E_ALL);
 require('../../config.php');
 require('_incs/functions.php');
 
-$DEVINTERRUPT = TRUE;
-
 // Handle form submission.
-if (!DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   $PROCEED = FALSE;
 
@@ -255,9 +253,6 @@ if ($database_host && $database_name && $database_user && $database_pass) {
         // document.getElementById("newasset").submit();
 
         $(function() {
-
-          alert('validateMyForm disabled');
-          return;
 
           $submitThis=true;
 
