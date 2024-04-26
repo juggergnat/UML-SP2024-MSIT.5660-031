@@ -182,7 +182,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
   <body>
     <div class="outer">
     <h1>Asset Tracker Demo</h1>
-    <p>This is a thing.</p>
+    <p>This is a thing on <?php echo gethostname(); ?>.</p>
     <?php if (isset($ocrlines) && $ocrlines) { ?><p class="ocrlines">Lines: <?php echo implode(', ', $ocrlines); ?></p><?php } ?>
     <?php if (isset($ocrmatch) && $ocrmatch) { ?><p class="ocrmatch"><?php echo $ocrmatch; ?></p><?php } ?>
     <?php if (isset($failure)) { ?><p class="failure"><?php echo $failure; ?></p><?php } ?>
