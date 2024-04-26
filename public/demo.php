@@ -8,7 +8,7 @@ error_reporting(E_ALL);
 // require('_incs/curldemo.php');
 // require('_incs/uploaddemo.php');
 
-require('../config.php');
+require('../../config.php');
 require('_incs/functions.php');
 
 // Handle form submission.
@@ -211,6 +211,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       <p>
       <label for="uploaded_file">SKU image</label>
       <input type="file" name="uploaded_file" id="uploaded_file" required accept="image/jpeg, image/png">
+      <small>Restricted to jpg and png files only.</small>
       </p>
       <p>
       <label for="person">Person</label>

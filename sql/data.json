@@ -1,7 +1,7 @@
 {
-  "instance": "pak2d-db-mysql",
   "project": "sp2024-ka-p2",
-  "database": "webdb",
+  "instance": "pak2d-db-mysql",
+  "name": "webdb",
   "query": [
     {
       "query": "drop table if exists asset_item"
