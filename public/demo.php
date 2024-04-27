@@ -94,7 +94,7 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
             if ($_POST['sku'] == preg_replace("/[^0-9]/", "", $l) ) {
               $ocrmatch = 'The sku you entered matches what we found in the image. Neat! ';
               if ($demo_image) {
-                $ocrmatch .= "Using the demo image: $demo_image."
+                $ocrmatch .= "Using the demo image: $demo_image.";
               }
               $PROCEED = TRUE;
             }
@@ -102,14 +102,14 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
           if ( ! $ocrmatch ) {
             $failure = "The OCR did not match the SKU entered. Try again?";
             if ($demo_image) {
-              $failure .= "Using the demo image: $demo_image."
+              $failure .= "Using the demo image: $demo_image.";
             }
           }
         }
         else {
           $failure = "Could not intepret OCR. Call the author.";
           if ($demo_image) {
-            $failure .= "Using the demo image: $demo_image."
+            $failure .= "Using the demo image: $demo_image.";
           }
         }
       }
