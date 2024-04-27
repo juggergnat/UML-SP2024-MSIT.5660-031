@@ -124,95 +124,59 @@ function uploadImage($ip) {
 
 // Storage handler.
 //
-function uploadBlob($filepath, $blobName, $URL, $filetype, $CRED_PATH, $PROJ_ID) {
+function uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $GC_SECRET, $GC_TOKEN_URL, $GCS_BUCKET) {
 
-  $file_data = file_get_contents($filepath);
-  $accessToken = getAccessToken($CRED_PATH, $PROJ_ID);
-
-  $ch = curl_init();
-  curl_setopt ( $ch, CURLOPT_URL, $URL );
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-  curl_setopt($ch, CURLOPT_POSTFIELDS, $file_data);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Authorization: Bearer ' . $accessToken,
-    'Content-Type: ' . $filetype
+  // Construct POST data
+  $post_data = http_build_query([
+    'client_id' => $GC_CLIENT_ID,
+    'client_secret' => $GC_SECRET,
+    'grant_type' => 'client_credentials'
   ]);
-
-  $result = curl_exec($ch);
-
-  // Check for errors
-  $message = ($result === false) ? 'cURL error: ' . curl_error($ch) : 'Object uploaded to Google Cloud Storage.';
-
+  $ch = curl_init();
+  curl_setopt ( $ch, CURLOPT_URL, $GC_TOKEN_URL );
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_POST, true);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+  $response = curl_exec($ch);
+  if ($response === false) {
+    return [
+      'url' => $URL,
+      'file' => $blobName,
+      'response' => $response,
+      'result' => NULL,
+      'message' => 'cURL error: ' . curl_error($ch),
+    ];
+  }  
+  // Decode JSON response and extract access token
+  $response_data = json_decode($response, true);
+  $access_token = $response_data['access_token'];
+  // Close cURL resource for obtaining access token
   curl_close($ch);
 
+  $upload_url = $GCS_URL . urlencode($blobName);
+
+  $ch_upload = curl_init();
+  curl_setopt($ch_upload, CURLOPT_URL, $upload_url);
+  curl_setopt($ch_upload, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch_upload, CURLOPT_POST, true);
+  curl_setopt($ch_upload, CURLOPT_POSTFIELDS, file_get_contents($filepath));
+  curl_setopt($ch_upload, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $access_token,
+    'Content-Type: ' . $filetype,
+  ]);
+  $result = curl_exec($ch_upload);
+
+  // Check for errors
+  $message = ($result === false) ? 'cURL error: ' . curl_error($ch_upload) : 'Object uploaded to Google Cloud Storage.';
+
+  curl_close($ch_upload);
+
   return [
-    'url' => $URL,
+    'url' => $upload_url,
     'file' => $blobName,
     'result' => $result,
     'message' => $message,
   ];
-}
-
-// Function to get access token using Google Cloud service account credentials
-function getAccessToken($CRED_PATH, $PROJ_ID) {
-
-    // global $credentials_file_path, $project_id;
-    $credentials_file_path = $CRED_PATH;
-    $project_id = $PROJ_ID;
-
-    $credentials = json_decode(file_get_contents($credentials_file_path), true);
-
-    $token_url = 'https://oauth2.googleapis.com/token';
-    $data = [
-        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        'assertion' => getTokenAssertion($credentials)
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $token_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-
-    $response = curl_exec($ch);
-
-    if ($response === false) {
-        echo 'cURL error: ' . curl_error($ch);
-    } else {
-        $response_data = json_decode($response, true);
-        return $response_data['access_token'];
-    }
-
-    curl_close($ch);
-}
-
-// Function to generate JWT token assertion
-function getTokenAssertion($credentials) {
-    $now = time();
-    $expires = $now + 3600; // Token expires in 1 hour
-
-    $jwt_header = [
-        'alg' => 'RS256',
-        'typ' => 'JWT'
-    ];
-
-    $jwt_payload = [
-        'iss' => $credentials['client_email'],
-        'scope' => 'https://www.googleapis.com/auth/cloud-platform',
-        'aud' => 'https://oauth2.googleapis.com/token',
-        'exp' => $expires,
-        'iat' => $now
-    ];
-
-    $jwt_header_encoded = base64_encode(json_encode($jwt_header));
-    $jwt_payload_encoded = base64_encode(json_encode($jwt_payload));
-
-    $signature_input = $jwt_header_encoded . '.' . $jwt_payload_encoded;
-    openssl_sign($signature_input, $jwt_signature, $credentials['private_key'], 'SHA256');
-    $jwt_signature_encoded = base64_encode($jwt_signature);
-
-    return $jwt_header_encoded . '.' . $jwt_payload_encoded . '.' . $jwt_signature_encoded;
 }
 
 ?>
