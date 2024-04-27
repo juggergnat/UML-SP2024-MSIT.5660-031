@@ -260,7 +260,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
                 $it['image_note'] = '';
               }
             ?>
-            <p><img src="<?php echo $it['image']; ?>" width="300" /><br>
+            <p><img src="<?php echo $it['image']; ?>" title="<?php echo $it['image']; ?>" width="300" /><br>
             id: <?php echo $it['aid']; ?><br/> 
             sku: <?php echo $it['sku']; ?> <br/>
             type: <?php echo $it['akey']; ?> <br/>
