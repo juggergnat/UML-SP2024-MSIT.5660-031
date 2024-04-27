@@ -2,10 +2,12 @@
 
 $PUBLIC_IP = 'VAL_PUBLIC_IP';
 
+$GC_CLIENT_ID = 'VAL_GC_CLIENT_ID';
+$GC_SECRET    = 'VAL_GC_SECRET';
+$GC_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+
 $GCS_BUCKET    = 'VAL_GCS_BUCKET';
-$GCS_URL       = 'https://storage.googleapis.com/upload/storage/v1/b/' . $GCS_BUCKET . '/o?uploadType=media';
-$GC_PROJECT_ID = 'VAL_GC_PROJECT_ID';
-$GC_CRED_PATH  = 'VAL_GC_CRED_PATH';
+$GCS_URL       = 'https://storage.googleapis.com/upload/storage/v1/b/' . $GCS_BUCKET . '/o?uploadType=media&name=';
 
 // $STORAGE_NAME      = 'VAL_STORAGE_NAME';
 // $STORAGE_KEY       = 'VAL_STORAGE_KEY';

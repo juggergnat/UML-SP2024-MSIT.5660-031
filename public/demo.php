@@ -23,19 +23,17 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
   if ( !empty($_FILES['uploaded_file']) ) {
 
     // These come from the uploaded file.
-    $filename           = $_FILES['uploaded_file']['name'];
-    $filetype           = $_FILES['uploaded_file']['type'];     // e.g. 'image/jpeg'; aka $content_type
-    $filepath           = $_FILES['uploaded_file']['tmp_name']; // e.g. '/path/to/your/file.jpg';
-    $blobName           = date('YmdGis') . '__' . $filename;
+    $filename   = $_FILES['uploaded_file']['name'];
+    $filetype   = $_FILES['uploaded_file']['type'];     // e.g. 'image/jpeg'; aka $content_type
+    $filepath   = $_FILES['uploaded_file']['tmp_name']; // e.g. '/path/to/your/file.jpg';
+    $blobName   = date('YmdGis') . '__' . $filename;
 
     // These are specific to the cloud storage provider.
-    $URL                = $GCS_URL;
-    $CRED_PATH          = $GC_CRED_PATH;
-    $PROJ_ID            = $GC_PROJECT_ID;
 
     $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
     if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
-      $rawblob = uploadBlob($filepath, $blobName, $URL, $filetype, $CRED_PATH, $PROJ_ID);
+      $rawblob = uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $GC_SECRET, $GC_TOKEN_URL, $GCS_BUCKET);
+      $failure = $rawblob['message'];
     }
     else {
       $failure = "Sorry, only jpg and png.";
@@ -203,7 +201,10 @@ if ($database_host && $database_name && $database_user && $database_pass) {
     <?php if ($submitted) { ?><p class="submitted">Submitted, see below for new entry.</p><?php } ?>
 
     <p><strong>All fields are required.</p>
+    <form id="newasset" action="" method="POST" enctype="multipart/form-data">
+    <!--
     <form id="newasset" action="" method="POST" onsubmit="event.preventDefault(); validateMyForm();" enctype="multipart/form-data">
+    -->
       <p>
       <label for="assettype">Asset Type</label>
       <!-- TODO: Select from asset_type. -->
