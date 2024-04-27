@@ -28,10 +28,10 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
     $filepath   = $_FILES['uploaded_file']['tmp_name']; // e.g. '/path/to/your/file.jpg';
     $blobName   = date('YmdGis') . '__' . $filename;
 
-    // These are specific to the cloud storage provider.
-
     $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
+
     if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
+
       $rawblob = uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $GC_SECRET, $GC_TOKEN_URL, $GCS_BUCKET);
       if (isset($rawblob['message'])) {
         echo $rawblob['message'];
@@ -150,7 +150,7 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
   else {
     $PROCEED = FALSE;
     $insert["error"] = true;
-    $insert["msg"]   = "Couldn't write to the database.";
+    $insert["msg"]   = "Didn't attempt to write to the database.";
   }
 }
 
