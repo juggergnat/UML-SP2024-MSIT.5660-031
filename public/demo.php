@@ -33,7 +33,10 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
     $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
     if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
       $rawblob = uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $GC_SECRET, $GC_TOKEN_URL, $GCS_BUCKET);
-      $failure = $rawblob['message'];
+      if (isset($rawblob['message'])) {
+        echo $rawblob['message'];
+      }
+      // $PROCEED = TRUE;
     }
     else {
       $failure = "Sorry, only jpg and png.";
