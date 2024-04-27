@@ -81,6 +81,8 @@ function scanImage($endpoint, $subscriptionKey, $imageurl) {
 //
 function uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $GC_SECRET, $GC_TOKEN_URL, $GCS_BUCKET) {
 
+  $upload_url = $GCS_URL . urlencode($blobName);
+
   // Fetch the Access Token first.
 
   // Construct POST data
@@ -100,7 +102,7 @@ function uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $G
   // False response is a hard failure. Response can still be no auth. 
   if ($response === false) {
     return [
-      'url' => $URL,
+      'url' => $upload_url,
       'file' => $blobName,
       'response' => $response,
       'result' => NULL,
@@ -114,8 +116,6 @@ function uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $G
 
   // Close cURL resource for obtaining access token
   curl_close($ch);
-
-  $upload_url = $GCS_URL . urlencode($blobName);
 
   if ($access_token) {
 
