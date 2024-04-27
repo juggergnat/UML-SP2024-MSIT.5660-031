@@ -289,7 +289,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
             "outputType": "FourSeverityLevels" };
 
           $.ajax({
-            url: "https://<?php echo $CS_END; ?>.cognitiveservices.azure.com/contentsafety/text:analyze?api-version=2023-10-01"  + $.param(params),
+            url: "<?php echo $CS_END; ?>contentsafety/text:analyze?api-version=2023-10-01"  + $.param(params),
             beforeSend: function(xhrObj){
               // Request headers
               xhrObj.setRequestHeader("Content-Type","application/json");
