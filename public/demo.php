@@ -204,10 +204,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
     <?php if ($submitted) { ?><p class="submitted">Submitted, see below for new entry.</p><?php } ?>
 
     <p><strong>All fields are required.</p>
-    <form id="newasset" action="" method="POST" enctype="multipart/form-data">
-    <!--
     <form id="newasset" action="" method="POST" onsubmit="event.preventDefault(); validateMyForm();" enctype="multipart/form-data">
-    -->
       <p>
       <label for="assettype">Asset Type</label>
       <!-- TODO: Select from asset_type. -->
@@ -280,9 +277,6 @@ if ($database_host && $database_name && $database_user && $database_pass) {
 
         $(function() {
 
-          alert('validateMyForm disabled');
-          return;
-
           $submitThis=true;
 
           var params = {
@@ -291,7 +285,6 @@ if ($database_host && $database_name && $database_user && $database_pass) {
 
           $body = { "text": document.getElementById("note").value,
             "categories": [ "Violence", "Hate" ],
-            "blocklistNames": [ "bl-pak" ],
             "haltOnBlocklistHit": false,
             "outputType": "FourSeverityLevels" };
 
@@ -307,10 +300,6 @@ if ($database_host && $database_name && $database_user && $database_pass) {
             data: JSON.stringify($body),
           })
           .done(function(data) {
-            if ( data.blocklistsMatch.length ) {
-              $submitThis=false;
-              alert("You cannot use the word/phrase: " + data.blocklistsMatch[0].blocklistItemText);
-            }
             if ( data.categoriesAnalysis.length ) {
               for ( i=0; i<data.categoriesAnalysis.length; i++ ){
                 if ( data.categoriesAnalysis[i].severity ) {
