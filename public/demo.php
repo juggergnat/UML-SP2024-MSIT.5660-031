@@ -217,6 +217,7 @@ if ($database_host && $database_name && $database_user && $database_pass) {
       <p>
       <label for="sku">SKU</label>
       <input type="text" name="sku" id="sku" placeholder="Enter the 5 or 6 digit code" maxlength="6" required>
+      <small>Use 73308 for demo purposes.</small>
       </p>
       <p>
       <label for="uploaded_file">SKU image</label>
