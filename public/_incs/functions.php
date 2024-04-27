@@ -20,7 +20,7 @@ function scanImage($endpoint, $subscriptionKey, $imageurl) {
   // $params = array('language' => 'en');
   // $request_URL = $request_URL . '?' . http_build_query($params);
 
-  $URL = "https://" . $endpoint . ".cognitiveservices.azure.com/computervision/imageanalysis:analyze?features=caption,read&model-version=latest&language=en&api-version=2024-02-01";
+  $URL = $endpoint . "computervision/imageanalysis:analyze?features=caption,read&model-version=latest&language=en&api-version=2024-02-01";
 
   $headers = [
     // 'Authorization: ' . $authHeader,

@@ -36,7 +36,7 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
       if (isset($rawblob['message'])) {
         echo $rawblob['message'];
       }
-      // $PROCEED = TRUE;
+      $PROCEED = TRUE;
     }
     else {
       $failure = "Sorry, only jpg and png.";
@@ -46,56 +46,74 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
   // Run OCR on image.
   //
   if ($PROCEED) {
-  if ( ! $rawblob['url'] ) {
-    $failure = "Could not run OCR. Call the author.";
-  }
-  else {
-    $scanResult = scanImage($CV_END, $CV_KEY, $rawblob['url']);
-    if ( ! $scanResult ) {
-      $failure = "Could not complete OCR. Call the author.";
+
+    // Demo images for before I wire up the storage uploader.
+    $demo_image = '';
+    $demo_images = [
+      'https://storage.googleapis.com/pak2d-sb1/IMG_9764.jpg',
+      'https://storage.googleapis.com/pak2d-sb1/IMG_9765.jpg',
+      'https://storage.googleapis.com/pak2d-sb1/IMG_9766.jpg',
+    ];
+    $demo_image = $demo_images[rand(0,2)];
+
+    // Demo image will take precedence when present.
+    if ( ! $demo_image && ! $rawblob['url'] ) {
+      $failure = "Could not run OCR. Call the author.";
     }
     else {
-      if ( isset($scanResult['err']) && ! $scanResult['err'] && isset($scanResult['data'])) {
-
-        // Decode and re-encode JSON data with pretty-printing.
-        // $decodedData = json_decode($scanResult['data'], true);
-        // $prettyPrintedJson = json_encode($decodedData, JSON_PRETTY_PRINT);
-        // $ocr_result = '<pre>' . print_r($prettyPrintedJson, true) . '</pre>';
-
-        $ocrlines = [];
-        $ocrdata  = json_decode($scanResult['data'], true);
-        if (isset($ocrdata['readResult']) && is_array($ocrdata['readResult'])) {
-          foreach ($ocrdata['readResult'] as $readResult) {
-            // if (isset($readResult['blocks']) && is_array($readResult['blocks'])) {
-            if (is_array($readResult)) { 
-              foreach ($readResult as $block) {
-                if (isset($block['lines']) && is_array($block['lines'])) {
-                  foreach ($block['lines'] as $line) {
-                    $ocrlines[] = $line['text'];
-                  }        
+      $scanURL = ($demo_image ? $demo_image : $rawblob['url']);
+      $scanResult = scanImage($CV_END, $CV_KEY, $scanURL);
+      if ( ! $scanResult ) {
+        $failure = "Could not complete OCR. Call the author. ($scanURL)";
+      }
+      else {
+        if ( isset($scanResult['err']) && ! $scanResult['err'] && isset($scanResult['data'])) {
+          // Decode and re-encode JSON data with pretty-printing.
+          // $decodedData = json_decode($scanResult['data'], true);
+          // $prettyPrintedJson = json_encode($decodedData, JSON_PRETTY_PRINT);
+          // $ocr_result = '<pre>' . print_r($prettyPrintedJson, true) . '</pre>';
+          $ocrlines = [];
+          $ocrdata  = json_decode($scanResult['data'], true);
+          if (isset($ocrdata['readResult']) && is_array($ocrdata['readResult'])) {
+            foreach ($ocrdata['readResult'] as $readResult) {
+              // if (isset($readResult['blocks']) && is_array($readResult['blocks'])) {
+              if (is_array($readResult)) { 
+                foreach ($readResult as $block) {
+                  if (isset($block['lines']) && is_array($block['lines'])) {
+                    foreach ($block['lines'] as $line) {
+                      $ocrlines[] = $line['text'];
+                    }        
+                  }
                 }
               }
             }
           }
-        }
 
-        $ocrmatch = FALSE;
-        foreach ($ocrlines as $l) {
-          if ($_POST['sku'] == preg_replace("/[^0-9]/", "", $l) ) {
-            $ocrmatch = 'The sku you entered matches what we found in the image. Neat!';
-            $PROCEED = TRUE;
+          $ocrmatch = FALSE;
+          foreach ($ocrlines as $l) {
+            if ($_POST['sku'] == preg_replace("/[^0-9]/", "", $l) ) {
+              $ocrmatch = 'The sku you entered matches what we found in the image. Neat! ';
+              if ($demo_image) {
+                $ocrmatch .= "Using the demo image: $demo_image."
+              }
+              $PROCEED = TRUE;
+            }
+          }
+          if ( ! $ocrmatch ) {
+            $failure = "The OCR did not match the SKU entered. Try again?";
+            if ($demo_image) {
+              $failure .= "Using the demo image: $demo_image."
+            }
           }
         }
-        if ( ! $ocrmatch ) {
-          $failure = "The OCR did not match the SKU entered. Try again?";
+        else {
+          $failure = "Could not intepret OCR. Call the author.";
+          if ($demo_image) {
+            $failure .= "Using the demo image: $demo_image."
+          }
         }
-
-      }
-      else {
-        $failure = "Could not intepret OCR. Call the author.";
       }
     }
-  }
   }
 
   // Upload image to Azure Storage.
