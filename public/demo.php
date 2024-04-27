@@ -150,7 +150,7 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
   else {
     $PROCEED = FALSE;
     $insert["error"] = true;
-    $insert["msg"]   = "Couldn't write to the database, but I think the images got stored.";
+    $insert["msg"]   = "Couldn't write to the database.";
   }
 }
 
