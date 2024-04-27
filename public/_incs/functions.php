@@ -136,7 +136,7 @@ function uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $G
     curl_close($ch_upload);
   }
   else {
-    $message = "Storage authentication failed. Obvious exits are complex but include OA v SA, php exec, cron, server side, etc. Proceeding anyway...";
+    $message = "Known issue: Storage authentication failed. Obvious exits are complex but include OA v SA, php exec, cron, server side, etc. Proceeding anyway...";
   }
 
   return [
