@@ -54,7 +54,7 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
       'https://storage.googleapis.com/pak2d-sb1/IMG_9765.jpg',
       'https://storage.googleapis.com/pak2d-sb1/IMG_9766.jpg',
     ];
-    $demo_image = $demo_images[rand(0,2)];
+    $demo_image = $demo_images[rand(0,0)];
 
     // Demo image will take precedence when present.
     if ( ! $demo_image && ! $rawblob['url'] ) {
@@ -116,33 +116,11 @@ if (!$DEVINTERRUPT && $_SERVER["REQUEST_METHOD"] == "POST") {
     }
   }
 
-  // Upload image to Azure Storage.
-  //
-  /*
-  if ( $PROCEED && !empty($_FILES['uploaded_file']) && isset($rawblob['file'])) {
-    $filename           = $_FILES['uploaded_file']['name'];
-    $filetype           = $_FILES['uploaded_file']['type'];
-    $filepath           = $_FILES['uploaded_file']['tmp_name'];
-    $storageAccountname = $STORAGE_NAME;
-    $containerName      = $STORAGE_CONTAINER;
-    $accesskey          = $STORAGE_KEY;
-    $blobName           = preg_replace("/[^0-9]/", "", $_POST['sku']) . '__' . $rawblob['file'];
-    $URL = "https://$storageAccountname.blob.core.windows.net/$containerName/$blobName";
-
-    $file_parts = pathinfo(basename($_FILES['uploaded_file']['name']));
-    if ($file_parts['extension'] == 'jpg' || $file_parts['extension'] == 'png') {
-      $cookedblob = uploadBlob($filepath, $storageAccountname, $containerName, $blobName, $URL, $accesskey, $filetype);
-    }
-    else {
-      $PROCEED = FALSE;
-      $failure = "Image issue. Needs to be jpg or png.";
-    }
+  // We had some intermittent stuff. Removed it. It's messy and I don't care.
+  $cookedblob = $rawblob;
+  if ($demo_image) {
+    $cookedblob['url'] = $demo_image;
   }
-  else {
-    $PROCEED = FALSE;
-    $failure = "Image issue. Call the author.";
-  }
-  */
 
   // Write to Database.
   //
