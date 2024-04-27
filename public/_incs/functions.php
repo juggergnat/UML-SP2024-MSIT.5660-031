@@ -110,7 +110,7 @@ function uploadBlob($filepath, $blobName, $GCS_URL, $filetype, $GC_CLIENT_ID, $G
 
   // Decode JSON response and extract access token or failure.
   $response_data = json_decode($response, true);
-  $access_token = (isset($response_data['access_token']) ? $response_data['access_token'] : FALSE;
+  $access_token = isset($response_data['access_token']) ? $response_data['access_token'] : FALSE;
 
   // Close cURL resource for obtaining access token
   curl_close($ch);
