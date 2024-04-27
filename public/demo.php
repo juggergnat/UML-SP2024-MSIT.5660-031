@@ -251,13 +251,22 @@ if ($database_host && $database_name && $database_user && $database_pass) {
         ?></pre>
         <?php if (isset($output['data']) && is_array($output['data'])) { ?>
           <?php foreach ($output['data'] as $it) { ?>
+            <?php 
+              if (!isset($it['image'])) {
+                $it['image'] = "https://storage.googleapis.com/pak2d-sb1/symphony-slang-it-200.jpg";
+                $it['image_note'] = "(GCP placeholder image) <br/>";
+              }
+              else {
+                $it['image_note'] = '';
+              }
+            ?>
             <p><img src="<?php echo $it['image']; ?>" width="300" /><br>
-            id: <?php echo $it['aid']; ?>   <br/> 
-            sku: <?php echo $it['sku']; ?>    <br/>
-            type: <?php echo $it['akey']; ?>    <br/>
-            person: <?php echo $it['person']; ?>   <br/>
-            note: <?php echo $it['note']; ?>    <br />
-            image url: <?php echo $it['image']; ?>    </p>
+            id: <?php echo $it['aid']; ?><br/> 
+            sku: <?php echo $it['sku']; ?> <br/>
+            type: <?php echo $it['akey']; ?> <br/>
+            person: <?php echo $it['person']; ?><br/>
+            note: <?php echo $it['note']; ?> <br />
+            image url: <?php echo $it['image_note']; ?>  <?php echo $it['image']; ?></p>
           <?php } ?>
         <?php } ?>
       <?php } ?>
